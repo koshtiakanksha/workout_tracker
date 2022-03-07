@@ -1,45 +1,54 @@
 import requests
 from datetime import datetime
+import os
 
-API_KEY = "37f77f8d66d0cd3431331f8104d560e9"
-API_ID = "360ae15a"
-API_URL = f"https://trackapi.nutritionix.com/v2/natural/exercise"
+GENDER = YOUR GENDER
+WEIGHT_KG = YOUR WEIGHT
+HEIGHT_CM = YOUR HEIGHT
+AGE = YOUR AGE
 
-SHEETY_API = "https://api.sheety.co/ae242319d210966e5669717ffeb7833e/myWorkouts/workouts"
+APP_ID = os.environ["NT_APP_ID"]
+API_KEY = os.environ["NT_API_KEY"]
 
-my_height = "167.64"
-my_weight = "50"
-my_gender = "female"
-my_age = 21
+exercise_endpoint = "https://trackapi.nutritionix.com/v2/natural/exercise"
+sheet_endpoint = os.environ["SHEET_ENDPOINT"]
+
+exercise_text = input("Tell me which exercises you did: ")
+
+headers = {
+    "x-app-id": APP_ID,
+    "x-app-key": API_KEY,
+}
 
 parameters = {
-    "query": input("Tell me which exercise you did:\n"),
-    "gender": my_gender,
-    "weight_kg": my_weight,
-    "height_cm": my_height,
-    "age": 21
-}
-header = {
-    "x-app-id": API_ID,
-    "x-app-key": API_KEY
+    "query": exercise_text,
+    "gender": GENDER,
+    "weight_kg": WEIGHT_KG,
+    "height_cm": HEIGHT_CM,
+    "age": AGE
 }
 
-response = requests.post(url=API_URL, json=parameters, headers=header)
+response = requests.post(exercise_endpoint, json=parameters, headers=headers)
 result = response.json()
 
-today = datetime.now().strftime("%d%m%Y")
+today_date = datetime.now().strftime("%d/%m/%Y")
 now_time = datetime.now().strftime("%X")
 
+bearer_headers = {
+    "Authorization": f"Bearer {os.environ['TOKEN']}"
+}
+
 for exercise in result["exercises"]:
-    sheet_input = {
+    sheet_inputs = {
         "workout": {
-            "date": today,
+            "date": today_date,
             "time": now_time,
             "exercise": exercise["name"].title(),
             "duration": exercise["duration_min"],
             "calories": exercise["nf_calories"]
         }
-
     }
-    sheet_response = requests.post(SHEETY_API, json=sheet_input)
+
+    sheet_response = requests.post(sheet_endpoint, json=sheet_inputs, headers=bearer_headers)
+
     print(sheet_response.text)
